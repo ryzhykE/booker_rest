@@ -21,7 +21,7 @@ class User extends Models
         $result = $db->execute($sql);
         return $result;
     }
-
+ */
     public static function loginUser($login)
     {
         $db = DB::getInstance();
@@ -32,7 +32,6 @@ class User extends Models
         return $data[0];
         //?? false;
     }
- */
     public function checkUsers($id)
     {
         $db = DB::getInstance();
