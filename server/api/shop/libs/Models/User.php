@@ -5,7 +5,7 @@ namespace Models;
 
 class User extends Models
 {
-    public static $table = 'b_users';
+    public static $table = 'users';
     public $id;
     public $login;
     public $pass;
