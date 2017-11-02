@@ -13,11 +13,21 @@ class User extends \Validator
 
     public function getUser($data = false,$type = false)
     {
+
         try
         {
-            $result = \Models\Client::findAll();
-            $result = \Response::typeData($result,$type);
-            return \Response::ServerSuccess(200, $result);
+            if($data[1] === null )
+            {
+                $result = \Models\User::findAll();
+                $result = \Response::typeData($result,$type);
+                return \Response::ServerSuccess(200, $result);
+            }
+            else
+            {
+                $result = \Models\User::checkUsers($data[0]);
+                $result = \Response::typeData($result,$type);
+                return \Response::ServerSuccess(200, $result);
+            }
         }
         catch(\Exception $exception)
         {
@@ -28,6 +38,29 @@ class User extends \Validator
 
     public function postUser($data=false)
     {
+        try {
+            $login = $this->valid->clearData($_POST['login']);
+            $pass = $this->valid->clearData($_POST['pass']);
+            $email = $this->valid->clearData($_POST['email']);
+            if($login !== false && $pass !== false && $email !== false)
+            {
+                $result = \Models\User::authUser($login,$pass,$email);
+            }
+            else {
+
+                return "не корр логин";
+
+            }
+            if (false === $result) {
+                return \Response::ClientError(401, "User with such login already exists ");
+            } else {
+                return \Response::ServerSuccess(200, "Register success");
+            }
+        }
+        catch(\Exception $exception)
+        {
+            return \Response::ServerSuccess(500, $exception->getMessage());
+        }
     }
 
     public function putUser($data=false)

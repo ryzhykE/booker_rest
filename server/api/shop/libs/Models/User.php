@@ -11,17 +11,17 @@ class User extends Models
     public $pass;
     public $hash;
     public $id_role;
-/**
-    public static function authUser($first_name,$last_name,$login,$pass)
+
+    public static function authUser($login,$pass,$email)
     {
         $pass = md5(md5(trim($pass)));
-        $sql = "INSERT INTO  " . static::$table ." ( first_name,last_name,login, pass)
-                VALUES ('$first_name', '$last_name', '$login', '$pass' )";
+        $sql = "INSERT INTO  " . static::$table ." ( login, pass, email)
+                VALUES ('$login', '$pass', '$email' )";
         $db = DB::getInstance();
         $result = $db->execute($sql);
         return $result;
     }
- */
+
     public static function loginUser($login)
     {
         $db = DB::getInstance();
@@ -30,8 +30,8 @@ class User extends Models
             [':login' => $login]
         );
         return $data[0];
-        //?? false;
     }
+
     public function checkUsers($id)
     {
         $db = DB::getInstance();
@@ -39,9 +39,7 @@ class User extends Models
             'SELECT * FROM ' . static::$table . ' WHERE id=:id',
             [':id' => $id]
         );
-        //return = ['discount'=>$data[0]['hash'], 'hash'=>$data[0]['hash'] , 'role'=> $role];
         return $data[0];
-        //?? false;
     }
 
     public static function setHash($id)
@@ -54,8 +52,6 @@ class User extends Models
             [':id' => $id]
         );
         $id_role = $data[0]['id_role'];
-
-
         $sql = "UPDATE " . static::$table . " SET hash = '$hash' WHERE id = '$id' ";
         $result = $db->execute($sql);
         $arr = ['id'=>$id, 'hash'=>$hash , 'id_role'=> $id_role];
