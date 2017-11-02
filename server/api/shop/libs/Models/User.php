@@ -36,7 +36,7 @@ class User extends Models
     {
         $db = DB::getInstance();
         $data = $db->query(
-            'SELECT * FROM ' . static::$table . ' WHERE id=:id',
+            'SELECT * FROM users  WHERE id=:id',
             [':id' => $id]
         );
         return $data[0];
@@ -58,6 +58,17 @@ class User extends Models
         return json_encode($arr);
     }
 
+    public static function updateUser($id,$login,$email,$pass)
+    {
+            $pass = md5(md5(trim($pass)));
+            $sql = "UPDATE  users  SET login='$login', email='$email',
+                pass = '$pass'  WHERE id='$id' ";
+            $db = DB::getInstance();
+            $result = $db->execute($sql);
+            return $result;
+
+            
+    }
     function generateCode($length = 6)
     {
         $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHI JKLMNOPRQSTUVWXYZ0123456789";

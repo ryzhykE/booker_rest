@@ -70,7 +70,7 @@ class User extends \Validator
 
             $results = $this->valid->clearData($putParams['login']);
             $result = \Models\User::loginUser($results);
-           if($result)
+            if($result)
             {
                 if(md5(md5($putParams['pass'])) === $result["pass"] )
                 {
@@ -88,6 +88,18 @@ class User extends \Validator
             return \Response::ServerSuccess(500, $exception->getMessage());
         }
 
+    }
+
+    public static function updateUser($id,$login,$email,$pass)
+    {
+            $pass = md5(md5(trim($pass)));
+            $sql = "UPDATE  " . static::$table ." SET login='$login', email='$email',
+                pass = '$pass'  WHERE id='$id' ";
+            $db = DB::getInstance();
+            $result = $db->execute($sql);
+            return $result;
+
+            
     }
 
 }
