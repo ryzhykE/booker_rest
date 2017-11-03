@@ -90,16 +90,18 @@ class User extends \Validator
 
     }
 
-    public static function updateUser($id,$login,$email,$pass)
+    public function deleteUser($data)
     {
-            $pass = md5(md5(trim($pass)));
-            $sql = "UPDATE  " . static::$table ." SET login='$login', email='$email',
-                pass = '$pass'  WHERE id='$id' ";
-            $db = DB::getInstance();
-            $result = $db->execute($sql);
-            return $result;
-
-            
+        try
+        {
+            $param = $this->valid->clearData($data[0]);
+            $result = \Models\User::deleteUser($param);
+            return \Response::ServerSuccess(200, $result);
+        }
+        catch (\Exception $exception)
+        {
+            return \Response::ServerSuccess(500, $exception->getMessage());
+        }
     }
 
 }

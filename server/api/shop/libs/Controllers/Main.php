@@ -14,7 +14,7 @@ class Main extends \Validator
 
     public function getMain ($data = false,$type = false)
     {
-        var_dump($data);
+        //var_dump($data);
         $result = 'Main Controller';
         return \Response::ServerSuccess(200, $result);
 

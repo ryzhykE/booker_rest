@@ -69,6 +69,68 @@ class User extends Models
 
             
     }
+
+    public static function getRoleUser($id)
+    {
+        $db = DB::getInstance();
+        $data = $db->query(
+            'SELECT roles.name FROM users u LEFT JOIN roles  ON u.id_role=roles.id WHERE u.id=:id',
+            [':id' => $id]
+        );
+        if (!empty ($data))
+        {
+            return $data[0]['name'];
+        }
+        return false;
+    }
+
+
+    public function deleteUser($id)
+    {
+        if (self::getRoleUser($id) == 'user')
+        {
+            $sql = 'DELETE FROM events WHERE id_user=:id AND time_start > NOW()';
+            $data[':id'] = $id;
+            $db = DB::getInstance();
+            $db->execute($sql, $data);
+            $sql = 'DELETE FROM users  WHERE id=:id';
+            $data[':id'] = $id;
+            $db = DB::getInstance();
+            $db->execute($sql, $data);
+            return true;
+        }
+        else
+        {
+            $db = DB::getInstance();
+            $data = $db->query(
+                'SELECT count(id_role) as sum FROM users WHERE id_role=1',
+                []
+            );
+            if ($data[0]['sum'] > 1)
+            {
+                $db = DB::getInstance();
+                $data = $db->query(
+                    'DELETE FROM users  WHERE id=:id',
+                    [':id' => $id]
+                );
+                if (!empty ($data))
+                {
+                    return true;
+                }
+                return false;
+            }
+            else
+            {
+                return ERROR_ADDMDEL;
+            }
+
+
+        }
+        return ERROR_DELL;
+
+    }
+
+
     function generateCode($length = 6)
     {
         $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHI JKLMNOPRQSTUVWXYZ0123456789";

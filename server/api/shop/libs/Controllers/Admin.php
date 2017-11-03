@@ -10,6 +10,14 @@ class Admin extends \Validator
         
     }
 
+    public function getAdmin ($data = false,$type = false)
+    {
+        $result = \Models\User::deleteUser($data[0]);
+        $result = \Response::typeData($result,$type);
+        return \Response::ServerSuccess(200, $result);
+
+    }
+
     public function putAdmin($data=false)
     {
         try {
