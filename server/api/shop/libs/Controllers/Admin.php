@@ -12,17 +12,7 @@ class Admin extends \Validator
 
     public function getAdmin ($data = false,$type = false)
     {
-        $start = new \DateTime();
-        $start->setdate('19/10/2016 14:48:21');
-        $end = new \DateTime();
-        $end->setdate('30/11/2017 19:40:22');
 
-     //   $start = $date->format('Y-m-d H:i:s');
-        
-       // $end = $date->format('Y-m-d H:i:s');
-        $result = \Models\Events::allEvents($data[0],$start, $end);
-        $result = \Response::typeData($result,$type);
-        return \Response::ServerSuccess(200, $result); 
 
     }
 
