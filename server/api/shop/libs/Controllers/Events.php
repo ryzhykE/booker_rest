@@ -31,66 +31,45 @@ class Events
 
     public function postEvents($data = false,$type = false)
     {
-        try {
 
-            if($_POST['recur_period'] === null)
-            {
-                $id_user = $_POST['id_user'];
-                $id_room = $_POST['id_room'];
-                $description = $_POST['description'];
-                $dateStart = new \DateTime();
-                $startT = $dateStart->setTimestamp($_POST['time_start']/1000);
-                $timeS = $startT->format(DATE_FORMAT);
-                $endT = $dateStart->setTimestamp($_POST['time_end']/1000);
-                $timeE = $endT->format(DATE_FORMAT);
-                $result = \Models\Events::addEvents($id_user, $id_room, $description, $timeS, $timeE);
-            }
-            else
-            {
-                $id_user = $_POST['id_user'];
-                $id_room = $_POST['id_room'];
-                $description = $_POST['description'];
-                $period = $_POST['duration'];
-                $modify = $_POST['recur_period'];
+        $id_user = $_POST['id_user'];
+        $id_room = $_POST['id_room'];
+        $description = $_POST['description'];
+        $dateStart = new \DateTime();
+        $dateEnd = new \DateTime();
+        $timeS = $dateStart->setTimestamp($_POST['time_start']/1000);
+        $timeE = $dateEnd->setTimestamp($_POST['time_end']/1000);
+    
+        $id = \Models\Events::addEvents($id_user, $id_room, $description, $timeS, $timeE);
 
-                $timeS = new \DateTime();
-               // $timeS->modify(self::getRecurring($modify));
-                $startT = $timeS->setTimestamp($timeS/1000);
-                $timeS = $startT->format(DATE_FORMAT);
-
-                $timeE = new \DateTime();
-              //  $timeE->modify(self::getRecurring($modify));
-                $endT = $timeE->setTimestamp($timeE/1000);
-                $timeE = $endT->format(DATE_FORMAT);
-
-                $result = \Models\Events::addRecurringEvent($id_user, $id_room, $description, $timeS, $timeE,$period);
-            }
-
-        }
-        catch(\Exception $exception)
+        if($_POST['recur_period'] != null)
         {
-            return \Response::ServerSuccess(500, $exception->getMessage());
+            $period = $_POST['duration'];
+            $modify = $_POST['recur_period'];
+            $result = \Models\Events::addRecurringEvent($id_user, $id_room, 
+                $description, $timeS, $timeE,$period,$modify,$id);
+            echo $result;
         }
-
     }
 
-    private function getRecurring($data)
+
+private function getRecurring($data)
+{
+    $offset = '';
+    switch ($data)
     {
-        $offset = '';
-        switch ($data)
-        {
-            case 'weekly':
-                $offset = '+1 week';
-                break;
-            case 'bi-weekly':
-                $offset = '+2 weeks';
-                break;
-            case 'monthly':
-                $offset = '+1 month';
-                break;
-        }
-        return $offset;
+    case 'weekly':
+        $offset = '+1 week';
+        break;
+    case 'bi-weekly':
+        $offset = '+2 weeks';
+        break;
+    case 'monthly':
+        $offset = '+1 month';
+        break;
     }
+    return $offset;
+}
 
 
 }

@@ -26,45 +26,82 @@ class Events extends Models
 
     public static function addEvents($id_user, $id_room, $description, $timeS, $timeE)
     {
+        $st = $timeS->format(DATE_FORMAT);
+        $en = $timeE->format(DATE_FORMAT);
         $sql = "INSERT INTO  " . static::$table ." ( id_user, id_room, description, time_start, time_end)
-                VALUES ('$id_user', '$id_room', '$description', '$timeS', '$timeE' )";
+            VALUES ($id_user, $id_room, '$description', '$st' , '$en' )";
+        // var_dump($sql);
+        // exit();
         $db = DB::getInstance();
         $db->execute($sql);
         $result['id_parent'] = $db->lastInsertId();
         return $result;
     }
 
-    public static function addRecurringEvent($id_user, $id_room, $description, $timeS, $timeE,$period )//offset
+    public static function addRecurringEvent($id_user, $id_room, 
+        $description, $timeS, $timeE,$period,$modify,$id)
     {
-        $timeS = $timeS;
-
-        $timeE = $timeE;
-        //$offset = $this->getRecurring()
+        $errors =0;
         for ($i=0; $i<$period; $i++)
         {
-            $timeS->modify();// $offset
-            $timeE->modify();//$offset
-            $sql = "INSERT INTO  " . static::$table ." ( id_user, id_room, description, time_start, time_end,id_parent)
-                VALUES ('$id_user', '$id_room', '$description', '$timeS', '$timeE', '1' )";
-            $db = DB::getInstance();
-            $result = $db->execute($sql);
-            return $result;
+            $timeS->modify(self::getrecurring($modify));
+            $timeE->modify(self::getrecurring($modify));
+            $st = $timeS->format(DATE_FORMAT);
+            $en = $timeE->format(DATE_FORMAT);
+
+            if(!self::insertRecEvent($st,$en,$id_user,$id_room,$description,$id))
+            {
+                $errors++;
+            }
         }
+        if($errors == 0)
+        {
+            return true;
+        }
+        else {
+            return "No add $errors  ";
+        }
+
+
+    } 
+
+    private function insertRecEvent($st,$en,$id_user,$id_room,$description,$id){
+        if(self::normalTime($idRoom,$st)) {
+            $sql = "INSERT INTO  " . static::$table ." ( id_user, id_room, description, time_start, time_end,id_parent)
+                VALUES ('$id_user', '$id_room', '$description', '$st', '$en', '$id' )";
+            // var_dump($sql);exit();
+            $db = DB::getInstance();
+            return  $db->execute($sql);
+
+        }
+        else {
+            return false;
+        }
+
+
+
+
     }
 
+    private function normalTime($idRoom,$st){
+
+            return true;
+        
+    }
     private function getRecurring($data)
     {
+        $offset = '';
         switch ($data)
         {
-            case 'weekly':
-                $offset = '+1 week';
-                break;
-            case 'bi-weekly':
-                $offset = '+2 weeks';
-                break;
-            case 'monthly':
-                $offset = '+1 month';
-                break;
+        case 'weekly':
+            $offset = '+1 week';
+            break;
+        case 'bi-weekly':
+            $offset = '+2 weeks';
+            break;
+        case 'monthly':
+            $offset = '+1 month';
+            break;
         }
         return $offset;
     }

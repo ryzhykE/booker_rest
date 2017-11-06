@@ -30,10 +30,10 @@ class DB
     }
 
 	public function execute($sql,$data = [])
-    //public function execute(string $sql, array $data = [])
     {
         $sth = $this->dbh->prepare($sql);
         $result = $sth->execute($data);
+
         return $result;
     }
 
