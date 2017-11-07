@@ -9,12 +9,12 @@ class Events extends Models
     {
         $sql = 'DELETE FROM events WHERE id=:id AND time_start > NOW()';
         $data[':id'] = $id;
-        $db = DB::getInstance();
+        $db = db::getinstance();
         $result = $db->execute($sql, $data);
         return  $result;
     }
 
-    public static function allEvents($id,$start,$end)
+    public static function allEvents($id,$start,$end,$parent=false)
     {
         $db = DB::getInstance();
         $data = $db->query(
@@ -39,7 +39,7 @@ class Events extends Models
         $en = $timeE->format(DATE_FORMAT);
         if(self::normalTime($id_room,$st,$en)) {
             $sql = "INSERT INTO  " . static::$table . " ( id_user, id_room, description, time_start, time_end)
-            VALUES ($id_user, $id_room, '$description', '$st' , '$en' )";
+                VALUES ($id_user, $id_room, '$description', '$st' , '$en' )";
             $db = DB::getInstance();
             $db->execute($sql);
             $result['id_parent'] = $db->lastInsertId();
@@ -107,10 +107,10 @@ class Events extends Models
             $valSt = new \DateTime($val['time_start']);
             $valE =  new \DateTime($val['time_end']);
             if ((($valSt < $start && $valE <= $start)
-             || ($end <= $valSt && $end < $valE)))
-             {
-              return false;
-             }
+                || ($end <= $valSt && $end < $valE)))
+            {
+                return false;
+            }
         }
         return true;
     }
@@ -135,4 +135,37 @@ class Events extends Models
         return $offset;
     }
 
+    public function getCountEv($id,$parent,$time_start)
+    {
+         $db = DB::getInstance();
+        $data = $db->query(
+            "SELECT count(*) FROM events WHERE (id = :id OR parent_id = $parent) AND time_start > NOW() "
+            ,
+            [':id' => $id]
+        );
+        return $data;
+    }
+
+ private function deleteRecEvents($id,$id_parent)
+    {
+        if ($id_parent == 'null')
+        {
+            $sql = 'DELETE FROM events WHERE id='.$id.' OR id_parent='.$id_parent;
+            $db = db::getinstance();
+            $result = $db->execute($sql, $data);
+            return  $result;
+        }
+        else
+        {
+            $sql = 'DELETE FROM events WHERE (id='.$id.' OR id_parent='.$id_parent.') AND time_start >= NOW()';
+            $db = db::getinstance();
+            $result = $db->execute($sql, $data);
+            return  $result;
+        }
+    }
+
+
+
+
 }
+

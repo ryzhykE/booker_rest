@@ -18,6 +18,11 @@ class Events
             $start->setDate($year,$month,1);
             $arr = $start->format('Y-m-d 08:00:00');
             $end = $start->format('Y-m-t 20:00:00');
+            // if($data['count'])
+            // {
+            //  $result = \Models\Events::allEventsCount($data[0],$arr,$end);
+
+            // }
             $result = \Models\Events::allEvents($data[0],$arr,$end);
             $result = \Response::typeData($result,$type);
             return \Response::ServerSuccess(200, $result);
@@ -63,12 +68,8 @@ class Events
         {
             $result = \Models\Events::deleteEvent($data[0]);
             return \Response::ServerSuccess(200, $result);
+            
 
-
-//            if($data[1])
-//            {
-//                $sql = 'DELETE FROM events WHERE id='.$id.' OR id_parent='.$idParent.' ;
-//            }
         }
         catch (\Exception $exception)
         {
@@ -76,6 +77,20 @@ class Events
         }
     }
 
+public function deleteEventsG($data)
+    {
+        try
+        {
+            $result = \Models\Events::deleteRecEvents($data[0]);
+            return \Response::ServerSuccess(200, $result);
+            
+
+        }
+        catch (\Exception $exception)
+        {
+            return \Response::ServerError(500, $exception->getMessage());
+        }
+    }
 
 
 }
