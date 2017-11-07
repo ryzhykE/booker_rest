@@ -5,6 +5,15 @@ class Events extends Models
     public static $table = 'events';
     public $id;
 
+    public function deleteEvent($id)
+    {
+        $sql = 'DELETE FROM events WHERE id=:id AND time_start > NOW()';
+        $data[':id'] = $id;
+        $db = DB::getInstance();
+        $result = $db->execute($sql, $data);
+        return  $result;
+    }
+
     public static function allEvents($id,$start,$end)
     {
         $db = DB::getInstance();
@@ -28,15 +37,17 @@ class Events extends Models
     {
         $st = $timeS->format(DATE_FORMAT);
         $en = $timeE->format(DATE_FORMAT);
-        $sql = "INSERT INTO  " . static::$table ." ( id_user, id_room, description, time_start, time_end)
+        if(self::normalTime($id_room,$st,$en)) {
+            $sql = "INSERT INTO  " . static::$table . " ( id_user, id_room, description, time_start, time_end)
             VALUES ($id_user, $id_room, '$description', '$st' , '$en' )";
-        // var_dump($sql);
-        // exit();
-        $db = DB::getInstance();
-        $db->execute($sql);
-        $result['id_parent'] = $db->lastInsertId();
-        return $result;
+            $db = DB::getInstance();
+            $db->execute($sql);
+            $result['id_parent'] = $db->lastInsertId();
+            return $result;
+        }
+        return false;
     }
+
 
     public static function addRecurringEvent($id_user, $id_room, 
         $description, $timeS, $timeE,$period,$modify,$id)
@@ -56,38 +67,56 @@ class Events extends Models
         }
         if($errors == 0)
         {
-            return true;
+            return ADD_OK;
         }
         else {
-            return "No add $errors  ";
+            return "ADD_NO  $errors";
         }
 
 
     } 
 
     private function insertRecEvent($st,$en,$id_user,$id_room,$description,$id){
-        if(self::normalTime($idRoom,$st)) {
+        if(self::normalTime($id_room,$st,$en)) {
+            $idlast = $id['id_parent'];
             $sql = "INSERT INTO  " . static::$table ." ( id_user, id_room, description, time_start, time_end,id_parent)
-                VALUES ('$id_user', '$id_room', '$description', '$st', '$en', '$id' )";
-            // var_dump($sql);exit();
+                VALUES ('$id_user', '$id_room', '$description', '$st', '$en', $idlast )";
             $db = DB::getInstance();
-            return  $db->execute($sql);
+            $db->execute($sql);
+            return true;
 
         }
         else {
             return false;
         }
-
-
-
-
     }
-
-    private function normalTime($idRoom,$st){
-
+    private function normalTime($id_room,$start,$end)
+    {
+        $db = DB::getInstance();
+        $data = $db->query(
+            "SELECT time_start,time_end FROM events  WHERE id_room = :id
+            AND time_start  BETWEEN '$start' AND  '$end' ",
+            [':id' => $id_room]
+        );
+        if (!is_array($data))
+        {
             return true;
-        
+        }
+        foreach ($data as $val)
+        {
+            $valSt = new \DateTime($val['time_start']);
+            $valE =  new \DateTime($val['time_end']);
+            if ((($valSt < $start && $valE <= $start)
+             || ($end <= $valSt && $end < $valE)))
+             {
+              return false;
+             }
+        }
+        return true;
     }
+
+
+
     private function getRecurring($data)
     {
         $offset = '';

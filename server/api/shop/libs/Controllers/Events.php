@@ -25,51 +25,57 @@ class Events
         }
         catch(\Exception $exception)
         {
-            return \Response::ServerSuccess(500, $exception->getMessage());
+            return \Response::ServerError(500, $exception->getMessage());
         }
     }
 
     public function postEvents($data = false,$type = false)
     {
+        try{
+            $id_user = $_POST['id_user'];
+            $id_room = $_POST['id_room'];
+            $description = $_POST['description'];
+            $dateStart = new \DateTime();
+            $dateEnd = new \DateTime();
+            $timeS = $dateStart->setTimestamp($_POST['time_start']/1000);
+            $timeE = $dateEnd->setTimestamp($_POST['time_end']/1000);
+            $id = \Models\Events::addEvents($id_user, $id_room, $description, $timeS, $timeE);
 
-        $id_user = $_POST['id_user'];
-        $id_room = $_POST['id_room'];
-        $description = $_POST['description'];
-        $dateStart = new \DateTime();
-        $dateEnd = new \DateTime();
-        $timeS = $dateStart->setTimestamp($_POST['time_start']/1000);
-        $timeE = $dateEnd->setTimestamp($_POST['time_end']/1000);
-    
-        $id = \Models\Events::addEvents($id_user, $id_room, $description, $timeS, $timeE);
-
-        if($_POST['recur_period'] != null)
-        {
-            $period = $_POST['duration'];
-            $modify = $_POST['recur_period'];
-            $result = \Models\Events::addRecurringEvent($id_user, $id_room, 
+            if($_POST['recur_period'] != null)
+            {
+                $period = $_POST['duration'];
+                $modify = $_POST['recur_period'];
+                $result = \Models\Events::addRecurringEvent($id_user, $id_room,
                 $description, $timeS, $timeE,$period,$modify,$id);
-            echo $result;
+                return \Response::ServerSuccess(200, $result);
+            }
+
+        }
+        catch(\Exception $exception)
+        {
+            return \Response::ServerError(500, $exception->getMessage());
         }
     }
 
-
-private function getRecurring($data)
-{
-    $offset = '';
-    switch ($data)
+    public function deleteEvents($data)
     {
-    case 'weekly':
-        $offset = '+1 week';
-        break;
-    case 'bi-weekly':
-        $offset = '+2 weeks';
-        break;
-    case 'monthly':
-        $offset = '+1 month';
-        break;
+        try
+        {
+            $result = \Models\Events::deleteEvent($data[0]);
+            return \Response::ServerSuccess(200, $result);
+
+
+//            if($data[1])
+//            {
+//                $sql = 'DELETE FROM events WHERE id='.$id.' OR id_parent='.$idParent.' ;
+//            }
+        }
+        catch (\Exception $exception)
+        {
+            return \Response::ServerError(500, $exception->getMessage());
+        }
     }
-    return $offset;
-}
+
 
 
 }

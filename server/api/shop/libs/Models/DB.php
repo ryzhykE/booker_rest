@@ -33,7 +33,6 @@ class DB
     {
         $sth = $this->dbh->prepare($sql);
         $result = $sth->execute($data);
-
         return $result;
     }
 

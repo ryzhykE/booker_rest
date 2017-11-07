@@ -82,17 +82,5 @@ class Models
             $db = DB::getInstance();
             $db->execute($sql, $data);
     }
-    /**
-     * @param $id
-     */
-    public function delete()
-    {
-        $sql = '
-            DELETE FROM ' . static::$table . '
-            WHERE id=:id';
-        $data[':id'] = $this->id;
-        $db = DB::getInstance();
-        $db->execute($sql, $data);
-    }
 
 }
