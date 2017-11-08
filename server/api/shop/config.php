@@ -1,11 +1,13 @@
 <?php
 define('DEFAULT_TYPE', '.json');
 define('HOST','localhost');
-define('USER','root');
-define('PASSWORD', '');
-define('DB','booker');
+//define('USER','root');
+//define('PASSWORD', '');
+//define('DB','booker');
 
-//define('USER', 'user12');define('PASSWORD', 'tuser12');define('DB','user12');
+define('USER', 'user12');
+define('PASSWORD', 'tuser12');
+define('DB','user12');
 
 define('NO_CONNECT','No connect with DB ');
 define('NO_DATE', 'No date parametrs');

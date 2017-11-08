@@ -135,24 +135,24 @@ class Events extends Models
         if ($id_parent == 'null') {
             $sql = 'DELETE FROM events WHERE (id=' . $id . ' OR id_parent=' . $id . ')';
             $data[':id'] = $id;
-            $db = db::getinstance();
+            $db = DB::getinstance();
             $result = $db->execute($sql, $data);
             return $result;
         } else {
             $sql = 'DELETE FROM events WHERE (id=' . $id . ' OR id_parent=' . $id_parent . ') AND time_start >= NOW()';
             $data[':id'] = $id;
-            $db = db::getinstance();
+            $db = DB::getinstance();
             $result = $db->execute($sql, $data);
             return $result;
         }
     }
 
-    public function deleteEvent($id)
+    public static function deleteEvent($id)
     {
         $sql = 'DELETE FROM events WHERE id=:id AND time_start > NOW()';
         $data[':id'] = $id;
-        $db = db::getinstance();
-        $result = $db->execute($sql, $data);
+        $db = DB::getinstance();
+        $result = $db->execute($sql,$data);
         return $result;
     }
 
@@ -195,6 +195,5 @@ class Events extends Models
 
     }
 
-    }
 
 }
