@@ -5,16 +5,7 @@ class Events extends Models
     public static $table = 'events';
     public $id;
 
-    public function deleteEvent($id)
-    {
-        $sql = 'DELETE FROM events WHERE id=:id AND time_start > NOW()';
-        $data[':id'] = $id;
-        $db = db::getinstance();
-        $result = $db->execute($sql, $data);
-        return  $result;
-    }
-
-    public static function allEvents($id,$start,$end,$parent=false)
+    public static function allEvents($id, $start, $end, $parent = false)
     {
         $db = DB::getInstance();
         $data = $db->query(
@@ -37,7 +28,7 @@ class Events extends Models
     {
         $st = $timeS->format(DATE_FORMAT);
         $en = $timeE->format(DATE_FORMAT);
-        if(self::normalTime($id_room,$st,$en)) {
+        if (self::normalTime($id_room, $st, $en)) {
             $sql = "INSERT INTO  " . static::$table . " ( id_user, id_room, description, time_start, time_end)
                 VALUES ($id_user, $id_room, '$description', '$st' , '$en' )";
             $db = DB::getInstance();
@@ -49,48 +40,45 @@ class Events extends Models
     }
 
 
-    public static function addRecurringEvent($id_user, $id_room, 
-        $description, $timeS, $timeE,$period,$modify,$id)
+    public static function addRecurringEvent($id_user, $id_room,
+                                             $description, $timeS, $timeE, $period, $modify, $id)
     {
-        $errors =0;
-        for ($i=0; $i<$period; $i++)
-        {
+        $errors = 0;
+        for ($i = 0; $i < $period; $i++) {
             $timeS->modify(self::getrecurring($modify));
             $timeE->modify(self::getrecurring($modify));
             $st = $timeS->format(DATE_FORMAT);
             $en = $timeE->format(DATE_FORMAT);
 
-            if(!self::insertRecEvent($st,$en,$id_user,$id_room,$description,$id))
-            {
+            if (!self::insertRecEvent($st, $en, $id_user, $id_room, $description, $id)) {
                 $errors++;
             }
         }
-        if($errors == 0)
-        {
+        if ($errors == 0) {
             return ADD_OK;
+        } else {
+            return ADD_NO . ' ' . $errors . ' events';
         }
-        else {
-            return "ADD_NO  $errors";
-        }
 
 
-    } 
+    }
 
-    private function insertRecEvent($st,$en,$id_user,$id_room,$description,$id){
-        if(self::normalTime($id_room,$st,$en)) {
+    private function insertRecEvent($st, $en, $id_user, $id_room, $description, $id)
+    {
+        if (self::normalTime($id_room, $st, $en)) {
             $idlast = $id['id_parent'];
-            $sql = "INSERT INTO  " . static::$table ." ( id_user, id_room, description, time_start, time_end,id_parent)
+            $sql = "INSERT INTO  " . static::$table . " ( id_user, id_room, description, time_start, time_end,id_parent)
                 VALUES ('$id_user', '$id_room', '$description', '$st', '$en', $idlast )";
             $db = DB::getInstance();
             $db->execute($sql);
             return true;
 
-        }
-        else {
+        } else {
             return false;
         }
     }
-    private function normalTime($id_room,$start,$end)
+
+    private function normalTime($id_room, $start, $end)
     {
         $db = DB::getInstance();
         $data = $db->query(
@@ -98,17 +86,15 @@ class Events extends Models
             AND time_start  BETWEEN '$start' AND  '$end' ",
             [':id' => $id_room]
         );
-        if (!is_array($data))
-        {
+        if (!is_array($data)) {
             return true;
         }
-        foreach ($data as $val)
-        {
+        foreach ($data as $val) {
             $valSt = new \DateTime($val['time_start']);
-            $valE =  new \DateTime($val['time_end']);
+            $valE = new \DateTime($val['time_end']);
             if ((($valSt < $start && $valE <= $start)
-                || ($end <= $valSt && $end < $valE)))
-            {
+                || ($end <= $valSt && $end < $valE))
+            ) {
                 return false;
             }
         }
@@ -116,56 +102,99 @@ class Events extends Models
     }
 
 
-
     private function getRecurring($data)
     {
         $offset = '';
-        switch ($data)
-        {
-        case 'weekly':
-            $offset = '+1 week';
-            break;
-        case 'bi-weekly':
-            $offset = '+2 weeks';
-            break;
-        case 'monthly':
-            $offset = '+1 month';
-            break;
+        switch ($data) {
+            case 'weekly':
+                $offset = '+1 week';
+                break;
+            case 'bi-weekly':
+                $offset = '+2 weeks';
+                break;
+            case 'monthly':
+                $offset = '+1 month';
+                break;
         }
         return $offset;
     }
 
-    public function getCountEv($id,$parent,$time_start)
+    public function getCountEv($id, $parent)
     {
-         $db = DB::getInstance();
+        $db = DB::getInstance();
         $data = $db->query(
-            "SELECT count(*) FROM events WHERE (id = :id OR parent_id = $parent) AND time_start > NOW() "
+            "SELECT count(id) FROM events WHERE (id = :id OR id_parent = $parent) AND time_start > NOW() "
             ,
             [':id' => $id]
         );
         return $data;
     }
 
- private function deleteRecEvents($id,$id_parent)
+    public static function deleteRecEvents($id, $id_parent)
     {
-        if ($id_parent == 'null')
-        {
-            $sql = 'DELETE FROM events WHERE id='.$id.' OR id_parent='.$id_parent;
+        if ($id_parent == 'null') {
+            $sql = 'DELETE FROM events WHERE (id=' . $id . ' OR id_parent=' . $id . ')';
+            $data[':id'] = $id;
             $db = db::getinstance();
             $result = $db->execute($sql, $data);
-            return  $result;
-        }
-        else
-        {
-            $sql = 'DELETE FROM events WHERE (id='.$id.' OR id_parent='.$id_parent.') AND time_start >= NOW()';
+            return $result;
+        } else {
+            $sql = 'DELETE FROM events WHERE (id=' . $id . ' OR id_parent=' . $id_parent . ') AND time_start >= NOW()';
+            $data[':id'] = $id;
             $db = db::getinstance();
             $result = $db->execute($sql, $data);
-            return  $result;
+            return $result;
         }
     }
 
+    public function deleteEvent($id)
+    {
+        $sql = 'DELETE FROM events WHERE id=:id AND time_start > NOW()';
+        $data[':id'] = $id;
+        $db = db::getinstance();
+        $result = $db->execute($sql, $data);
+        return $result;
+    }
 
+    public function editEvent($id, $id_user, $id_room, $description, $timeS, $timeE)
+    {
 
+        $st = $timeS->format(DATE_FORMAT);
+        $en = $timeE->format(DATE_FORMAT);
+
+        $sql = "UPDATE  events  SET id_user='$id_user', id_room='$id_room',
+               description = '$description' , time_start = '$st', time_end = '$en' WHERE id='$id' ";
+        $db = DB::getInstance();
+        $result = $db->execute($sql);
+        return $result;
+
+    }
+
+    public function editRecEvent($data,$check,$id_user,$id_room,$description,$st,$en,$id)
+    {
+        $errors = 0;
+        for ($i=0; $i<count($data); $i++)
+        {
+                if ($check === true)
+                {
+                    $sql = "UPDATE  events  SET id_user='$id_user', id_room='$id_room',
+               description = '$description' , time_start = '$st', time_end = '$en' WHERE id='$id' ";
+                    $db = DB::getInstance();
+                    $result = $db->execute($sql);
+                }
+                else
+                {
+                    $errors[]= 'Date and time is reserved';
+                }
+        }
+        if (count($errors) == 0)
+        {
+            return true;
+        }
+        return $errors;
+
+    }
+
+    }
 
 }
-
