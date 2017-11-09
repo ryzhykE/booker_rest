@@ -24,6 +24,7 @@ class Events extends Models
         return $data;
     }
 
+
     public static function addEvents($id_user, $id_room, $description, $timeS, $timeE)
     {
         $st = $timeS->format(DATE_FORMAT);
@@ -77,13 +78,17 @@ class Events extends Models
             return false;
         }
     }
-
-    private function normalTime($id_room, $start, $end)
+    //передать ид что б не конфл с тем что есть
+    private function normalTime($id_room, $start, $end,$id = null)
     {
+        if(!self::is_valid_time_ftom_to())
+        {
+          return false;
+        }
         $db = DB::getInstance();
         $data = $db->query(
             "SELECT time_start,time_end FROM events  WHERE id_room = :id
-            AND time_start  BETWEEN '$start' AND  '$end' ",
+            AND time_start  BETWEEN '$start' AND  '$end' AND id != $id",
             [':id' => $id_room]
         );
         if (!is_array($data)) {
@@ -99,6 +104,11 @@ class Events extends Models
             }
         }
         return true;
+    }
+    //равнить время
+    function is_valid_time_ftom_to()
+    {
+
     }
 
 
@@ -119,15 +129,26 @@ class Events extends Models
         return $offset;
     }
 
-    public function getCountEv($id, $parent)
+    public function getCountEv($id, $parent = null)
     {
+        if(!$parent)
+        {
+            $db = DB::getInstance();
+            $data = $db->query(
+                "SELECT count(id) FROM events WHERE (id = :id OR id_parent = :id) AND time_start > NOW() "
+                ,
+                [':id' => $id]
+            );
+            return $data[0]["count(id)"];
+        }
         $db = DB::getInstance();
         $data = $db->query(
-            "SELECT count(id) FROM events WHERE (id = :id OR id_parent = $parent) AND time_start > NOW() "
+            "SELECT count(id) FROM events WHERE (id = :parent OR id_parent = :parent) AND time_start > NOW() "
             ,
-            [':id' => $id]
+            [':parent' => $parent]
         );
-        return $data;
+        return $data[0]["count(id)"];
+
     }
 
     public static function deleteRecEvents($id, $id_parent)
@@ -156,44 +177,143 @@ class Events extends Models
         return $result;
     }
 
-    public function editEvent($id, $id_user, $id_room, $description, $timeS, $timeE)
+    public function editEvents($id, $id_user, $id_room, $description, $timeS, $timeE, $start_point = null, $id_parent = null)
     {
-
         $st = $timeS->format(DATE_FORMAT);
         $en = $timeE->format(DATE_FORMAT);
+        if(!$start_point)
+        {
+            return self::editOneEvent($id_user, $id_room, $description, $st,  $en, $id);
+        }
+        $start_point = $start_point->format(DATE_FORMAT);
 
-        $sql = "UPDATE  events  SET id_user='$id_user', id_room='$id_room',
-               description = '$description' , time_start = '$st', time_end = '$en' WHERE id='$id' ";
-        $db = DB::getInstance();
-        $result = $db->execute($sql);
+        $result = self::editRecur($id, $id_user, $id_room, $description, $st, $en, $start_point, $id_parent);
         return $result;
+    }
+
+    private function editOneEvent($id_user, $id_room, $description, $st,  $en, $id)
+    {
+       // var_dump($description);exit;
+//       if(self::normalTime($id_room, $st, $en))
+  //     {
+            $sql = "UPDATE  events  SET id_user='$id_user', id_room='$id_room',
+                   description = '$description' , time_start = '$st', time_end = '$en' WHERE id='$id' ";
+            $db = DB::getInstance();
+            $result = $db->execute($sql);
+
+            return $result;
+     //   }
+        return false;// sdelat otvet
 
     }
 
-    public function editRecEvent($data,$check,$id_user,$id_room,$description,$st,$en,$id)
+
+    private function editRecur($id, $id_user, $id_room, $description, $timeS, $timeE,$start_point, $id_parent = null)
     {
-        $errors = 0;
-        for ($i=0; $i<count($data); $i++)
+        if($events = self::getUsersRecurEvents($id, $id_user, $start_point, $id_parent))
         {
-                if ($check === true)
+
+            $err= [];
+            foreach($events as $ev)
+            {
+                $start = new \DateTime($timeS);
+                $end = new \DateTime($timeE);
+                $id = $ev['id'];
+                $id_user = $id_user;
+                $id_room = $id_room;
+                $description = $description;
+                $newStart = new \DateTime($ev['time_start']);
+                $newStart->setTime($start->format('H'),$start->format('i'),0);
+                $newEnd = new \DateTime($ev['time_end']);
+                $newEnd->setTime($end->format('H'),$end->format('i'),0);
+
+           //     $newStart->format(DATE_FORMAT);
+           //     $newEnd->format(DATE_FORMAT);
+             //   var_dump($newStart);exit;
+                if(!self::editOneEvent($id_user, $id_room, $description, $newStart->format(DATE_FORMAT), $newEnd->format(DATE_FORMAT), $id))
                 {
-                    $sql = "UPDATE  events  SET id_user='$id_user', id_room='$id_room',
-               description = '$description' , time_start = '$st', time_end = '$en' WHERE id='$id' ";
-                    $db = DB::getInstance();
-                    $result = $db->execute($sql);
+                    $err[] = 'ne updated '.$newStart;
                 }
-                else
-                {
-                    $errors[]= 'Date and time is reserved';
-                }
-        }
-        if (count($errors) == 0)
-        {
+            }
+            if(count($err) !=0)
+            {
+                return $err;
+            }
             return true;
         }
-        return $errors;
+        return false;
 
     }
+
+    private function getUsersRecurEvents($id, $id_user, $start_point, $id_parent = null)
+    {
+        $db = DB::getInstance();
+        if(!$id_parent)
+        {
+            $data = $db->query(
+                $sql = "SELECT  id, id_parent, id_user, description, time_start, time_end from events where (time_start >= '{$start_point}')
+                  and (id = {$id} or id_parent = {$id}) and (id_user = {$id_user})"
+                ,
+                []
+            );
+        }
+        else
+        {
+            $data = $db->query(
+                $sql = "SELECT  id, id_parent, id_user, description, time_start, time_end from events where (time_start >= '{$start_point}')
+                  and (id = {$id} or id_parent = {$id_parent}) and (id_user = {$id_user})"
+                ,
+                []
+            );
+        }
+
+        return $data;
+
+
+    }
+
+
+    public static function eventPar($id,$id_ev,$id_par)
+    {
+        $db = DB::getInstance();
+        $data = $db->query(
+            "SELECT  e.id, e.id_user, u.login  as user_login,
+    e.id_room, r.name as room_name, e.description, e.time_start,
+    e.time_end, e.create_time, e.id_parent FROM events e
+    LEFT JOIN users u
+    ON e.id_user = u.id
+    LEFT JOIN rooms r
+    ON e.id_room = :id WHERE (e.id = '$id_ev' OR e.id_parent = '$id_par' ) AND e.time_start > NOW()"
+            ,
+            [':id' => $id]
+        );
+        return $data;
+    }
+
+//    public function editRecEvent($data,$check,$id_user,$id_room,$description,$st,$en,$id)
+//    {
+//        $errors = 0;
+//        for ($i=0; $i<count($data); $i++)
+//        {
+//                if ($check === true)
+//                {
+//                    $sql = "UPDATE  events  SET id_user='$id_user', id_room='$id_room',
+//               description = '$description' , time_start = '$st', time_end = '$en' WHERE id='$id' ";
+//                    $db = DB::getInstance();
+//                    $result = $db->execute($sql);
+//                }
+//                else
+//                {
+//                    $errors[]= 'Date and time is reserved';
+//                }
+//        }
+//        if (count($errors) == 0)
+//        {
+//            return true;
+//        }
+//        return $errors;
+//
+//    }
 
 
 }

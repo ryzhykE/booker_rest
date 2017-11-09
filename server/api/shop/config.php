@@ -1,13 +1,13 @@
 <?php
 define('DEFAULT_TYPE', '.json');
 define('HOST','localhost');
-//define('USER','root');
-//define('PASSWORD', '');
-//define('DB','booker');
+define('USER','root');
+define('PASSWORD', '');
+define('DB','booker');
 
-define('USER', 'user12');
-define('PASSWORD', 'tuser12');
-define('DB','user12');
+//define('USER', 'user12');
+//define('PASSWORD', 'tuser12');
+//define('DB','user12');
 
 define('NO_CONNECT','No connect with DB ');
 define('NO_DATE', 'No date parametrs');
@@ -19,6 +19,10 @@ define('ERROR_DELL','error delete');
 define('ERROR_ADDMDEL','error dell admin');
 define('DATE_FORMAT', 'Y-m-d H:i:s');
 define('ADD_OK', 'All date booking');
+define('ADD_ONE_OK', 'Date booking');
 define('ADD_NO', 'No booking');
+define('SELECT_DAY','Select another date');
 
+define('FROM_T', '08:00:00');
+define('TO_T', '20:00:00');
 date_default_timezone_set('Europe/Kiev');
