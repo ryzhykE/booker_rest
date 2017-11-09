@@ -29,14 +29,14 @@ class Events extends Models
     {
         $st = $timeS->format(DATE_FORMAT);
         $en = $timeE->format(DATE_FORMAT);
-        if (self::normalTime($id_room, $st, $en)) {
+     //   if (self::normalTime($id_room, $st, $en)) {
             $sql = "INSERT INTO  " . static::$table . " ( id_user, id_room, description, time_start, time_end)
                 VALUES ($id_user, $id_room, '$description', '$st' , '$en' )";
             $db = DB::getInstance();
             $db->execute($sql);
             $result['id_parent'] = $db->lastInsertId();
             return $result;
-        }
+       // }
         return false;
     }
 
@@ -66,7 +66,7 @@ class Events extends Models
 
     private function insertRecEvent($st, $en, $id_user, $id_room, $description, $id)
     {
-        if (self::normalTime($id_room, $st, $en)) {
+       // if (self::normalTime($id_room, $st, $en)) {
             $idlast = $id['id_parent'];
             $sql = "INSERT INTO  " . static::$table . " ( id_user, id_room, description, time_start, time_end,id_parent)
                 VALUES ('$id_user', '$id_room', '$description', '$st', '$en', $idlast )";
@@ -74,17 +74,17 @@ class Events extends Models
             $db->execute($sql);
             return true;
 
-        } else {
-            return false;
-        }
+       // } else {
+        //    return false;
+       // }
     }
     //передать ид что б не конфл с тем что есть
     private function normalTime($id_room, $start, $end,$id = null)
     {
-        if(!self::is_valid_time_ftom_to())
-        {
-          return false;
-        }
+       // if(!self::is_valid_time_ftom_to())
+       // {
+         // return false;
+       // }
         $db = DB::getInstance();
         $data = $db->query(
             "SELECT time_start,time_end FROM events  WHERE id_room = :id
@@ -106,10 +106,11 @@ class Events extends Models
         return true;
     }
     //равнить время
-    function is_valid_time_ftom_to()
-    {
+  //  function is_valid_time_ftom_to()
+   // {
+     //   return true;
 
-    }
+    //}
 
 
     private function getRecurring($data)
@@ -289,31 +290,5 @@ class Events extends Models
         );
         return $data;
     }
-
-//    public function editRecEvent($data,$check,$id_user,$id_room,$description,$st,$en,$id)
-//    {
-//        $errors = 0;
-//        for ($i=0; $i<count($data); $i++)
-//        {
-//                if ($check === true)
-//                {
-//                    $sql = "UPDATE  events  SET id_user='$id_user', id_room='$id_room',
-//               description = '$description' , time_start = '$st', time_end = '$en' WHERE id='$id' ";
-//                    $db = DB::getInstance();
-//                    $result = $db->execute($sql);
-//                }
-//                else
-//                {
-//                    $errors[]= 'Date and time is reserved';
-//                }
-//        }
-//        if (count($errors) == 0)
-//        {
-//            return true;
-//        }
-//        return $errors;
-//
-//    }
-
 
 }
