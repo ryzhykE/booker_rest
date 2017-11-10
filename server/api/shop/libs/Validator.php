@@ -4,9 +4,16 @@ class Validator
 {
     protected $data;
     public $value;
+
+    /**
+     * login validator
+     * @param string $data
+     * @return bool
+     */
     protected function loginValid($data)
     {
-        $pattern = '/^[a-zA-Z][a-zA-Z0-9-_\.]{1,20}$/';
+
+        $pattern = '/^[a-zA-Z][a-zA-Z0-9-_\.]{7,10}$/';
         if(preg_match($pattern, $data))
         {
             return true;

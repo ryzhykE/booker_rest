@@ -2,24 +2,43 @@
 
 class Response
 {
-    public static function ServerSuccess( $type, $message = null, $header = null) {
+    /**
+     * response server success
+     * @param $type
+     * @param null $message
+     */
+    public static function ServerSuccess( $type, $message = null) {
         $responseHeader = self::ServerOKType();
         header($responseHeader[$type]);
         echo $message;
     }
 
+    /**
+     * response server error
+     * @param $errorType
+     * @param $message
+     */
     public static function ServerError( $errorType, $message ) {
         $responseHeader = self::ServerErrorType();
         header($responseHeader[$errorType]);
         echo $message;
     }
 
+    /**
+     * response client error
+     * @param $errorType
+     * @param $message
+     */
     public static function ClientError( $errorType, $message ) {
         $responseHeader = self::ClientErrorType();
         header($responseHeader[$errorType]);
         echo $message;
     }
 
+    /**
+     * list client error
+     * @return array
+     */
     private static function ClientErrorType() {
         return array(
             400 => "HTTP/1.0 400 Bad Request",
@@ -31,6 +50,10 @@ class Response
         );
     }
 
+    /**
+     * list server error
+     * @return array
+     */
     private static function ServerErrorType() {
         return array(
             500 => "HTTP/1.0 500 Internal Server Error",
@@ -42,6 +65,10 @@ class Response
         );
     }
 
+    /**
+     * list ok response server
+     * @return array
+     */
     private static function ServerOKType() {
         return array(
             200 => "HTTP/1.0 200 OK",

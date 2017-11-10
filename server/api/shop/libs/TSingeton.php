@@ -1,5 +1,6 @@
 <?php
 
+
 trait TSingeton
 {
     protected static $instance = null;

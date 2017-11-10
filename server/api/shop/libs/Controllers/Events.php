@@ -2,10 +2,17 @@
 
 namespace Controllers;
 
-
+/**
+ * All act into events
+ * Class Events
+ * @package Controllers
+ */
 class Events
 {
     /**
+     * return parent - all parent events
+     * return count - count parent events
+     * return all events in month
      * @param bool $data
      * @param bool $type
      */
@@ -46,6 +53,13 @@ class Events
         }
     }
 
+    /**
+     * post events
+     * recur_period - post events recursively
+     * @param bool $data
+     * @param bool $type
+     */
+
     public function postEvents($data = false,$type = false)
     {
         try{
@@ -57,8 +71,6 @@ class Events
             $dateEnd = new \DateTime();
             $timeS = $dateStart->setTimestamp($_POST['time_start']/1000);
             $timeE = $dateEnd->setTimestamp($_POST['time_end']/1000);
-
-
             if($_POST['recur_period'] != null)
             {
                 $period = $_POST['duration'];
@@ -78,14 +90,18 @@ class Events
                     return \Response::ServerSuccess(200, ADD_ONE_OK);
                 }
             }
-
         }
         catch(\Exception $exception)
         {
-            return \Response::ServerError(500, $exception->getMessage());
+            return \Response::ServerError(200, "not add contr evv");
         }
     }
 
+    /**
+     * updating events
+     * start_point = updating events recursively
+     * putParams - array
+     */
     public function putEvents()
     {
         try {
@@ -105,7 +121,6 @@ class Events
             {
                 $start_point = new \DateTime();
                 $start_point= $start_point->setTimestamp($putParams['start_point'] / 1000);
-               //$result = \Models\Events::editEvent($id, $id_user, $id_room, $description, $timeS, $timeE,  $start_point);
             }
             $result = \Models\Events::editEvents($id, $id_user, $id_room, $description, $timeS, $timeE,  $start_point, $id_parent);
 
@@ -117,7 +132,6 @@ class Events
             {
                 false;
             }
-
         }
         catch(\Exception $exception)
         {
@@ -126,26 +140,37 @@ class Events
 
     }
 
-
+    /**
+     * delete events
+     * if id_parent  - delete events recursively
+     * @param $data
+     */
     public function deleteEvents($data)
     {
         try
         {
             $id = $data[0];
             $id_parent = $data[1];
-            $time_start = trim($data[3]);
-            //var_dump($time_start);
-            //exit;
+            $start_point = new \DateTime();
+            $start_point= $start_point->setTimestamp($data[3] / 1000);
             if($data[2])
             {
-                $result = \Models\Events::deleteRecEvents($id, $id_parent);
+                $result = \Models\Events::deleteRecEvents($id, $id_parent,$start_point);
             }
             else
             {
                 $result = \Models\Events::deleteEvent($id);
+                if($result)
+                {
+                    return \Response::ServerSuccess(200, $result);
+                }
+                else
+                {
+                    return false;
+                }
             }
 
-            return \Response::ServerSuccess(200, $result);
+
 
         }
         catch (\Exception $exception)

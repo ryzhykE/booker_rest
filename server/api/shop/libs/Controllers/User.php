@@ -1,7 +1,11 @@
 <?php
 
 namespace Controllers;
-
+/**
+ * work
+ * Class User
+ * @package Controllers
+ */
 class User extends \Validator
 {
     protected $valid;

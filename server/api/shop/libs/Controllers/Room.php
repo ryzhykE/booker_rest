@@ -2,9 +2,18 @@
 
 namespace Controllers;
 
-
+/**
+ * get room
+ * Class Room
+ * @package Controllers
+ */
 class Room
 {
+    /**
+     * get one or all room
+     * @param bool $data
+     * @param bool $type
+     */
     public function getRoom($data = false,$type = false)
     {
         try

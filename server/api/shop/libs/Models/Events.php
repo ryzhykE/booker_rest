@@ -25,20 +25,67 @@ class Events extends Models
     }
 
 
+
+
+
+    private function normalTime($id_room, $start, $end,$id = null)
+    {
+        // if(!self::is_valid_time_ftom_to())
+        // {
+        // return false;
+        // }
+        $db = DB::getInstance();
+        $data = $db->query(
+            "SELECT time_start,time_end FROM events  WHERE id_room = :id
+            AND time_start  BETWEEN '$start' AND  '$end' ",
+            [':id' => $id_room]
+        );
+        if (!is_array($data)) {
+            return true;
+        }
+        foreach ($data as $val) {
+            $valSt = new \DateTime($val['time_start']);
+            $valE = new \DateTime($val['time_end']);
+            if ((($valSt < $start && $valE <= $start)
+                || ($end <= $valSt && $end < $valE))
+            ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     public static function addEvents($id_user, $id_room, $description, $timeS, $timeE)
     {
         $st = $timeS->format(DATE_FORMAT);
         $en = $timeE->format(DATE_FORMAT);
-     //   if (self::normalTime($id_room, $st, $en)) {
+        if (self::normalTime($id_room, $st, $en)) {
             $sql = "INSERT INTO  " . static::$table . " ( id_user, id_room, description, time_start, time_end)
                 VALUES ($id_user, $id_room, '$description', '$st' , '$en' )";
             $db = DB::getInstance();
             $db->execute($sql);
             $result['id_parent'] = $db->lastInsertId();
             return $result;
-       // }
+        }
         return false;
     }
+
+    private function insertRecEvent($st, $en, $id_user, $id_room, $description, $id)
+    {
+        //if (self::normalTime($id_room, $st, $en)) {
+            $idlast = $id['id_parent'];
+            $sql = "INSERT INTO  " . static::$table . " ( id_user, id_room, description, time_start, time_end,id_parent)
+                VALUES ('$id_user', '$id_room', '$description', '$st', '$en', $idlast )";
+            $db = DB::getInstance();
+            $db->execute($sql);
+            return true;
+
+      //  } else {
+         //   return false;
+       // }
+    }
+
 
 
     public static function addRecurringEvent($id_user, $id_room,
@@ -64,53 +111,9 @@ class Events extends Models
 
     }
 
-    private function insertRecEvent($st, $en, $id_user, $id_room, $description, $id)
-    {
-       // if (self::normalTime($id_room, $st, $en)) {
-            $idlast = $id['id_parent'];
-            $sql = "INSERT INTO  " . static::$table . " ( id_user, id_room, description, time_start, time_end,id_parent)
-                VALUES ('$id_user', '$id_room', '$description', '$st', '$en', $idlast )";
-            $db = DB::getInstance();
-            $db->execute($sql);
-            return true;
 
-       // } else {
-        //    return false;
-       // }
-    }
-    //передать ид что б не конфл с тем что есть
-    private function normalTime($id_room, $start, $end,$id = null)
-    {
-       // if(!self::is_valid_time_ftom_to())
-       // {
-         // return false;
-       // }
-        $db = DB::getInstance();
-        $data = $db->query(
-            "SELECT time_start,time_end FROM events  WHERE id_room = :id
-            AND time_start  BETWEEN '$start' AND  '$end' AND id != $id",
-            [':id' => $id_room]
-        );
-        if (!is_array($data)) {
-            return true;
-        }
-        foreach ($data as $val) {
-            $valSt = new \DateTime($val['time_start']);
-            $valE = new \DateTime($val['time_end']);
-            if ((($valSt < $start && $valE <= $start)
-                || ($end <= $valSt && $end < $valE))
-            ) {
-                return false;
-            }
-        }
-        return true;
-    }
-    //равнить время
-  //  function is_valid_time_ftom_to()
-   // {
-     //   return true;
 
-    //}
+
 
 
     private function getRecurring($data)
@@ -152,19 +155,21 @@ class Events extends Models
 
     }
 
-    public static function deleteRecEvents($id, $id_parent)
+    public static function deleteRecEvents($id, $id_parent,$start_point)
     {
         if ($id_parent == 'null') {
-            $sql = 'DELETE FROM events WHERE (id=' . $id . ' OR id_parent=' . $id . ')';
+            $sql = "DELETE FROM events WHERE (id='$id' OR id_parent='$id') AND time_start >= '{$start_point->format(DATE_FORMAT)}'";
             $data[':id'] = $id;
             $db = DB::getinstance();
             $result = $db->execute($sql, $data);
+            //var_dump($result);
             return $result;
         } else {
-            $sql = 'DELETE FROM events WHERE (id=' . $id . ' OR id_parent=' . $id_parent . ') AND time_start >= NOW()';
+            $sql = "DELETE FROM events WHERE (id='$id' OR id_parent='$id_parent ') AND time_start >= '{$start_point->format(DATE_FORMAT)}'";
             $data[':id'] = $id;
             $db = DB::getinstance();
             $result = $db->execute($sql, $data);
+           // var_dump($result);exit;
             return $result;
         }
     }
@@ -175,7 +180,15 @@ class Events extends Models
         $data[':id'] = $id;
         $db = DB::getinstance();
         $result = $db->execute($sql,$data);
-        return $result;
+        if($result == null)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
     }
 
     public function editEvents($id, $id_user, $id_room, $description, $timeS, $timeE, $start_point = null, $id_parent = null)
@@ -187,24 +200,29 @@ class Events extends Models
             return self::editOneEvent($id_user, $id_room, $description, $st,  $en, $id);
         }
         $start_point = $start_point->format(DATE_FORMAT);
-
         $result = self::editRecur($id, $id_user, $id_room, $description, $st, $en, $start_point, $id_parent);
         return $result;
     }
 
     private function editOneEvent($id_user, $id_room, $description, $st,  $en, $id)
     {
-       // var_dump($description);exit;
-//       if(self::normalTime($id_room, $st, $en))
-  //     {
+     if(self::normalTime($id_room, $st, $en))
+     {
             $sql = "UPDATE  events  SET id_user='$id_user', id_room='$id_room',
                    description = '$description' , time_start = '$st', time_end = '$en' WHERE id='$id' ";
             $db = DB::getInstance();
             $result = $db->execute($sql);
+         if($result)
+         {
+             return true;
+         }
+         else
+         {
+             return false;
+         }
 
-            return $result;
-     //   }
-        return false;// sdelat otvet
+       }
+        return ERR_UPDATE;
 
     }
 
@@ -227,13 +245,9 @@ class Events extends Models
                 $newStart->setTime($start->format('H'),$start->format('i'),0);
                 $newEnd = new \DateTime($ev['time_end']);
                 $newEnd->setTime($end->format('H'),$end->format('i'),0);
-
-           //     $newStart->format(DATE_FORMAT);
-           //     $newEnd->format(DATE_FORMAT);
-             //   var_dump($newStart);exit;
                 if(!self::editOneEvent($id_user, $id_room, $description, $newStart->format(DATE_FORMAT), $newEnd->format(DATE_FORMAT), $id))
                 {
-                    $err[] = 'ne updated '.$newStart;
+                    $err[] = NO_UPDATE;
                 }
             }
             if(count($err) !=0)
@@ -274,6 +288,40 @@ class Events extends Models
     }
 
 
+
+      function is_valid_time_ftom_to($start_ev,$nd_ev)
+     {
+       return true;
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * take parent events
+     * @param $id
+     * @param $id_ev
+     * @param $id_par
+     * @return mixed
+     */
     public static function eventPar($id,$id_ev,$id_par)
     {
         $db = DB::getInstance();

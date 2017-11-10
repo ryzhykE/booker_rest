@@ -65,9 +65,15 @@ class User extends Models
                 pass = '$pass'  WHERE id='$id' ";
             $db = DB::getInstance();
             $result = $db->execute($sql);
+        if($result)
+        {
             return $result;
+        }
+        else
+        {
+            return false;
+        }
 
-            
     }
 
     public static function getRoleUser($id)
