@@ -73,7 +73,7 @@ class Events extends Models
 
     private function insertRecEvent($st, $en, $id_user, $id_room, $description, $id)
     {
-        //if (self::normalTime($id_room, $st, $en)) {
+        if(self::normalTime($id_room, $st, $en)) {
             $idlast = $id['id_parent'];
             $sql = "INSERT INTO  " . static::$table . " ( id_user, id_room, description, time_start, time_end,id_parent)
                 VALUES ('$id_user', '$id_room', '$description', '$st', '$en', $idlast )";
@@ -81,15 +81,15 @@ class Events extends Models
             $db->execute($sql);
             return true;
 
-      //  } else {
-         //   return false;
-       // }
+        } else {
+            return false;
+        }
     }
 
 
 
     public static function addRecurringEvent($id_user, $id_room,
-                                             $description, $timeS, $timeE, $period, $modify, $id)
+        $description, $timeS, $timeE, $period, $modify, $id)
     {
         $errors = 0;
         for ($i = 0; $i < $period; $i++) {
@@ -120,15 +120,15 @@ class Events extends Models
     {
         $offset = '';
         switch ($data) {
-            case 'weekly':
-                $offset = '+1 week';
-                break;
-            case 'bi-weekly':
-                $offset = '+2 weeks';
-                break;
-            case 'monthly':
-                $offset = '+1 month';
-                break;
+        case 'weekly':
+            $offset = '+1 week';
+            break;
+        case 'bi-weekly':
+            $offset = '+2 weeks';
+            break;
+        case 'monthly':
+            $offset = '+1 month';
+            break;
         }
         return $offset;
     }
@@ -162,15 +162,13 @@ class Events extends Models
             $data[':id'] = $id;
             $db = DB::getinstance();
             $result = $db->execute($sql, $data);
-            //var_dump($result);
-            return $result;
+            return true;
         } else {
             $sql = "DELETE FROM events WHERE (id='$id' OR id_parent='$id_parent ') AND time_start >= '{$start_point->format(DATE_FORMAT)}'";
             $data[':id'] = $id;
             $db = DB::getinstance();
             $result = $db->execute($sql, $data);
-           // var_dump($result);exit;
-            return $result;
+            var_dump($result);exit;
         }
     }
 
@@ -206,22 +204,22 @@ class Events extends Models
 
     private function editOneEvent($id_user, $id_room, $description, $st,  $en, $id)
     {
-     if(self::normalTime($id_room, $st, $en))
-     {
+        if(self::normalTime($id_room, $st, $en))
+        {
             $sql = "UPDATE  events  SET id_user='$id_user', id_room='$id_room',
-                   description = '$description' , time_start = '$st', time_end = '$en' WHERE id='$id' ";
+                description = '$description' , time_start = '$st', time_end = '$en' WHERE id='$id' ";
             $db = DB::getInstance();
             $result = $db->execute($sql);
-         if($result)
-         {
-             return true;
-         }
-         else
-         {
-             return false;
-         }
+            if($result)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
 
-       }
+        }
         return ERR_UPDATE;
 
     }
@@ -267,7 +265,7 @@ class Events extends Models
         {
             $data = $db->query(
                 $sql = "SELECT  id, id_parent, id_user, description, time_start, time_end from events where (time_start >= '{$start_point}')
-                  and (id = {$id} or id_parent = {$id}) and (id_user = {$id_user})"
+                and (id = {$id} or id_parent = {$id}) and (id_user = {$id_user})"
                 ,
                 []
             );
@@ -276,7 +274,7 @@ class Events extends Models
         {
             $data = $db->query(
                 $sql = "SELECT  id, id_parent, id_user, description, time_start, time_end from events where (time_start >= '{$start_point}')
-                  and (id = {$id} or id_parent = {$id_parent}) and (id_user = {$id_user})"
+                and (id = {$id} or id_parent = {$id_parent}) and (id_user = {$id_user})"
                 ,
                 []
             );
@@ -287,12 +285,18 @@ class Events extends Models
 
     }
 
-
-
-      function is_valid_time_ftom_to($start_ev,$nd_ev)
-     {
-       return true;
-
+    function is_valid_time_from_to($start_ev,$end_ev)
+    {
+        $start_t = date("G", $start_ev/1000);
+        $end_t = date("G", $end_ev/1000);
+        if ($start_t >= FROM_T && $start < TO_T)
+        {
+            if ($end >= FROM_T && $end <= TO_T)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -327,12 +331,12 @@ class Events extends Models
         $db = DB::getInstance();
         $data = $db->query(
             "SELECT  e.id, e.id_user, u.login  as user_login,
-    e.id_room, r.name as room_name, e.description, e.time_start,
-    e.time_end, e.create_time, e.id_parent FROM events e
-    LEFT JOIN users u
-    ON e.id_user = u.id
-    LEFT JOIN rooms r
-    ON e.id_room = :id WHERE (e.id = '$id_ev' OR e.id_parent = '$id_par' ) AND e.time_start > NOW()"
+            e.id_room, r.name as room_name, e.description, e.time_start,
+            e.time_end, e.create_time, e.id_parent FROM events e
+            LEFT JOIN users u
+            ON e.id_user = u.id
+            LEFT JOIN rooms r
+            ON e.id_room = :id WHERE (e.id = '$id_ev' OR e.id_parent = '$id_par' ) AND e.time_start > NOW()"
             ,
             [':id' => $id]
         );
