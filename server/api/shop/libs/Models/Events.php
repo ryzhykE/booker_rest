@@ -4,7 +4,21 @@ class Events extends Models
 {
     public static $table = 'events';
     public $id;
+    public $id_user;
+    public $id_room;
+    public $description;
+    public $time_start;
+    public $time_end;
+    //public $id_parent;
 
+    /**
+     * get all events
+     * @param $id
+     * @param $start
+     * @param $end
+     * @param bool $parent
+     * @return mixed
+     */
     public static function allEvents($id, $start, $end, $parent = false)
     {
         $db = DB::getInstance();
@@ -21,41 +35,22 @@ class Events extends Models
             ,
             [':id' => $id]
         );
+        if(!$data)
+        {
+            return false;
+        }
         return $data;
     }
 
-
-
-
-
-    private function normalTime($id_room, $start, $end,$id = null)
-    {
-        // if(!self::is_valid_time_ftom_to())
-        // {
-        // return false;
-        // }
-        $db = DB::getInstance();
-        $data = $db->query(
-            "SELECT time_start,time_end FROM events  WHERE id_room = :id
-            AND time_start  BETWEEN '$start' AND  '$end' ",
-            [':id' => $id_room]
-        );
-        if (!is_array($data)) {
-            return true;
-        }
-        foreach ($data as $val) {
-            $valSt = new \DateTime($val['time_start']);
-            $valE = new \DateTime($val['time_end']);
-            if ((($valSt < $start && $valE <= $start)
-                || ($end <= $valSt && $end < $valE))
-            ) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-
+    /**
+     * add new event/events
+     * @param $id_user
+     * @param $id_room
+     * @param $description
+     * @param $timeS
+     * @param $timeE
+     * @return bool
+     */
     public static function addEvents($id_user, $id_room, $description, $timeS, $timeE)
     {
         $st = $timeS->format(DATE_FORMAT);
@@ -71,6 +66,16 @@ class Events extends Models
         return false;
     }
 
+    /**
+     * insert recursion events
+     * @param $st
+     * @param $en
+     * @param $id_user
+     * @param $id_room
+     * @param $description
+     * @param $id
+     * @return bool
+     */
     private function insertRecEvent($st, $en, $id_user, $id_room, $description, $id)
     {
         if(self::normalTime($id_room, $st, $en)) {
@@ -87,7 +92,18 @@ class Events extends Models
     }
 
 
-
+    /**
+     * add recursion events
+     * @param $id_user
+     * @param $id_room
+     * @param $description
+     * @param $timeS
+     * @param $timeE
+     * @param $period
+     * @param $modify
+     * @param $id
+     * @return string
+     */
     public static function addRecurringEvent($id_user, $id_room,
         $description, $timeS, $timeE, $period, $modify, $id)
     {
@@ -97,7 +113,6 @@ class Events extends Models
             $timeE->modify(self::getrecurring($modify));
             $st = $timeS->format(DATE_FORMAT);
             $en = $timeE->format(DATE_FORMAT);
-
             if (!self::insertRecEvent($st, $en, $id_user, $id_room, $description, $id)) {
                 $errors++;
             }
@@ -107,15 +122,13 @@ class Events extends Models
         } else {
             return ADD_NO . ' ' . $errors . ' events';
         }
-
-
     }
 
-
-
-
-
-
+    /**
+     * get on of recursion period
+     * @param string $data
+     * @return string
+     */
     private function getRecurring($data)
     {
         $offset = '';
@@ -133,28 +146,13 @@ class Events extends Models
         return $offset;
     }
 
-    public function getCountEv($id, $parent = null)
-    {
-        if(!$parent)
-        {
-            $db = DB::getInstance();
-            $data = $db->query(
-                "SELECT count(id) FROM events WHERE (id = :id OR id_parent = :id) AND time_start > NOW() "
-                ,
-                [':id' => $id]
-            );
-            return $data[0]["count(id)"];
-        }
-        $db = DB::getInstance();
-        $data = $db->query(
-            "SELECT count(id) FROM events WHERE (id = :parent OR id_parent = :parent) AND time_start > NOW() "
-            ,
-            [':parent' => $parent]
-        );
-        return $data[0]["count(id)"];
-
-    }
-
+    /**
+     * delete events recursion
+     * @param $id
+     * @param $id_parent
+     * @param $start_point
+     * @return bool
+     */
     public static function deleteRecEvents($id, $id_parent,$start_point)
     {
         if ($id_parent == 'null') {
@@ -172,6 +170,11 @@ class Events extends Models
         }
     }
 
+    /**
+     * delete one event
+     * @param $id
+     * @return bool
+     */
     public static function deleteEvent($id)
     {
         $sql = 'DELETE FROM events WHERE id=:id AND time_start > NOW()';
@@ -189,6 +192,18 @@ class Events extends Models
 
     }
 
+    /**
+     * edit all events
+     * @param $id
+     * @param $id_user
+     * @param $id_room
+     * @param $description
+     * @param $timeS
+     * @param $timeE
+     * @param null $start_point
+     * @param null $id_parent
+     * @return array|bool|string
+     */
     public function editEvents($id, $id_user, $id_room, $description, $timeS, $timeE, $start_point = null, $id_parent = null)
     {
         $st = $timeS->format(DATE_FORMAT);
@@ -202,14 +217,25 @@ class Events extends Models
         return $result;
     }
 
+    /**
+     * edit one event
+     * @param $id_user
+     * @param $id_room
+     * @param $description
+     * @param $st
+     * @param $en
+     * @param $id
+     * @return bool|string
+     */
     private function editOneEvent($id_user, $id_room, $description, $st,  $en, $id)
     {
         if(self::normalTime($id_room, $st, $en))
-        {
+       {
             $sql = "UPDATE  events  SET id_user='$id_user', id_room='$id_room',
                 description = '$description' , time_start = '$st', time_end = '$en' WHERE id='$id' ";
             $db = DB::getInstance();
             $result = $db->execute($sql);
+            //var_dump($sql);exit;
             if($result)
             {
                 return true;
@@ -224,7 +250,18 @@ class Events extends Models
 
     }
 
-
+    /**
+     * recursion edit events
+     * @param $id
+     * @param $id_user
+     * @param $id_room
+     * @param $description
+     * @param $timeS
+     * @param $timeE
+     * @param $start_point
+     * @param null $id_parent
+     * @return array|bool
+     */
     private function editRecur($id, $id_user, $id_room, $description, $timeS, $timeE,$start_point, $id_parent = null)
     {
         if($events = self::getUsersRecurEvents($id, $id_user, $start_point, $id_parent))
@@ -245,19 +282,27 @@ class Events extends Models
                 $newEnd->setTime($end->format('H'),$end->format('i'),0);
                 if(!self::editOneEvent($id_user, $id_room, $description, $newStart->format(DATE_FORMAT), $newEnd->format(DATE_FORMAT), $id))
                 {
-                    $err[] = NO_UPDATE;
+                    $err++ ;
                 }
             }
-            if(count($err) !=0)
-            {
-                return $err;
+            if ($err == 0) {
+                return ADD_OK;
+            } else {
+                return NO_UPDATE . ' ' . $err . ' events';
             }
-            return true;
         }
         return false;
 
     }
 
+    /**
+     *
+     * @param $id
+     * @param $id_user
+     * @param $start_point
+     * @param null $id_parent
+     * @return mixed
+     */
     private function getUsersRecurEvents($id, $id_user, $start_point, $id_parent = null)
     {
         $db = DB::getInstance();
@@ -281,43 +326,35 @@ class Events extends Models
         }
 
         return $data;
-
-
     }
 
-    function is_valid_time_from_to($start_ev,$end_ev)
+    /**
+     * get count event
+     * @param $id
+     * @param null $parent
+     * @return mixed
+     */
+    public function getCountEv($id, $parent = null)
     {
-        $start_t = date("G", $start_ev/1000);
-        $end_t = date("G", $end_ev/1000);
-        if ($start_t >= FROM_T && $start < TO_T)
+        if(!$parent)
         {
-            if ($end >= FROM_T && $end <= TO_T)
-            {
-                return true;
-            }
+            $db = DB::getInstance();
+            $data = $db->query(
+                "SELECT count(id) FROM events WHERE (id = :id OR id_parent = :id) AND time_start > NOW() "
+                ,
+                [':id' => $id]
+            );
+            return $data[0]["count(id)"];
         }
-        return false;
+        $db = DB::getInstance();
+        $data = $db->query(
+            "SELECT count(id) FROM events WHERE (id = :parent OR id_parent = :parent) AND time_start > NOW() "
+            ,
+            [':parent' => $parent]
+        );
+        return $data[0]["count(id)"];
+
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     /**
      * take parent events
@@ -343,4 +380,60 @@ class Events extends Models
         return $data;
     }
 
+    /**
+     * check time from 8-00 to 20-00
+     * @param $start_ev
+     * @param $end_ev
+     * @return bool
+     */
+    function timeFrame($start_ev, $end_ev)
+    {
+        $start_t = date("G", $start_ev/1000);
+        $end_t = date("G", $end_ev/1000);
+        if ($start_t >= FROM_T && $start_t < TO_T)
+        {
+            if ($end_t >= FROM_T && $end_t <= TO_T)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * check time frame
+     * @param int $id_room
+     * @param sting $start
+     * @param string $end
+     * @param null $id
+     * @return bool
+     */
+   public static function normalTime($id_room, $start, $end,$id = null)
+    {
+        if(!self::timeFrame($start,$end))
+        {
+            return false;
+        }
+        $db = DB::getInstance();
+        $data = $db->query(
+            "SELECT time_start,time_end FROM events  WHERE id_room = :id
+            AND time_start  BETWEEN '$start' AND  '$end' ",
+            [':id' => $id_room]
+        );
+        if (!is_array($data)) {
+            return true;
+        }
+        foreach ($data as $val) {
+            $valSt = new \DateTime($val['time_start']);
+            $valE = new \DateTime($val['time_end']);
+            if ((($valSt < $start && $valE <= $start)
+                || ($end <= $valSt && $end < $valE))
+            ) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
+
+

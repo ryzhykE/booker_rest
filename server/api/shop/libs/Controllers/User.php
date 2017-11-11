@@ -28,7 +28,7 @@ class User extends \Validator
             }
             else
             {
-                $result = \Models\User::checkUsers($data[0]);
+                $result = \Models\User::findByid($data[0]);
                 $result = \Response::typeData($result,$type);
                 return \Response::ServerSuccess(200, $result);
             }
@@ -42,24 +42,18 @@ class User extends \Validator
 
     public function postUser($data=false)
     {
-        try {
-            $login = $this->valid->clearData($_POST['login']);
-            $pass = $this->valid->clearData($_POST['pass']);
-            $email = $this->valid->clearData($_POST['email']);
-            if($login !== false && $pass !== false && $email !== false)
+        try{
+            $res = new \Models\User();
+            $res->login = $this->valid->clearData($_POST['login']);
+            $res->pass = md5(md5(trim($this->valid->clearData($_POST['pass']))));
+            $res->email = $this->valid->clearData($_POST['email']);
+            $res->hash = 'null';
+            $result = $res->insert();
+            if($result)
             {
-                $result = \Models\User::authUser($login,$pass,$email);
-            }
-            else {
-
-                return "не корр логин";
-
-            }
-            if (false === $result) {
-                return \Response::ClientError(401, "User with such login already exists ");
-            } else {
                 return \Response::ServerSuccess(200, "Register success");
             }
+            return false;
         }
         catch(\Exception $exception)
         {

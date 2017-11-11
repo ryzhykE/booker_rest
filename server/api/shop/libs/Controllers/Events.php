@@ -7,8 +7,13 @@ namespace Controllers;
  * Class Events
  * @package Controllers
  */
-class Events
+class Events extends \Validator
 {
+    protected $valid;
+    public function __construct()
+    {
+        $this->valid = new \Validator();
+    }
     /**
      * return parent - all parent events
      * return count - count parent events
@@ -21,9 +26,9 @@ class Events
         try{
             if($data[0] === 'parent')
             {
-                $id = $data[1];
-                $id_ev = $data[2];
-                $id_par = $data[3];
+                $id = $this->valid->clearData($data[1]);
+                $id_ev = $this->valid->clearData($data[2]);
+                $id_par = $this->valid->clearData($data[3]);
                 $result = \Models\Events::eventPar($id,$id_ev,$id_par);
                 $result = \Response::typeData($result,$type);
                 return \Response::ServerSuccess(200, $result);
@@ -63,7 +68,6 @@ class Events
     public function postEvents($data = false,$type = false)
     {
         try{
-
             $id_user = $_POST['id_user'];
             $id_room = $_POST['id_room'];
             $description = $_POST['description'];
@@ -71,6 +75,9 @@ class Events
             $dateEnd = new \DateTime();
             $timeS = $dateStart->setTimestamp($_POST['time_start']/1000);
             $timeE = $dateEnd->setTimestamp($_POST['time_end']/1000);
+            $st = $timeS->format(DATE_FORMAT);
+            $en = $timeE->format(DATE_FORMAT);
+
             if($_POST['recur_period'] != null)
             {
                 $period = $_POST['duration'];
@@ -81,12 +88,18 @@ class Events
                 return \Response::ServerSuccess(200, $result);
             }
             else {
-                $result = \Models\Events::addEvents($id_user, $id_room, $description, $timeS, $timeE);
-                if(!$result)
-                {
-                    return \Response::ServerError(200, SELECT_DAY);
+                $events = new \Models\Events();
+                $events->id_user = $this->valid->clearData($_POST['id_user']);
+                $id_room = $events->id_room = $this->valid->clearData($_POST['id_room']);;
+                $events->description = $this->valid->clearData($_POST['description']);;
+                $events->time_start = $st;
+                $events->time_end = $en;
+                if ($events->normalTime($id_room, $st, $en)) {
+                    $result = $events->insert();
                 }
-                else {
+                if (!$result) {
+                    return \Response::ServerError(200, SELECT_DAY);
+                } else {
                     return \Response::ServerSuccess(200, ADD_ONE_OK);
                 }
             }
@@ -95,6 +108,7 @@ class Events
         {
             return \Response::ServerError(200, "not add contr evv");
         }
+
     }
 
     /**
@@ -122,7 +136,7 @@ class Events
                 $start_point = new \DateTime();
                 $start_point= $start_point->setTimestamp($putParams['start_point'] / 1000);
             }
-            $result = \Models\Events::editEvents($id, $id_user, $id_room, $description, $timeS, $timeE,  $start_point, $id_parent);
+            $result = \Models\Events::editEvents($id, $id_user, $id_room, $description, $timeS, $timeE, $start_point, $id_parent);
 
             if($result)
             {
@@ -141,16 +155,15 @@ class Events
     }
 
     /**
-     * delete events
-     * if id_parent  - delete events recursively
      * @param $data
+     * @return bool|void
      */
     public function deleteEvents($data)
     {
         try
         {
-            $id = $data[0];
-            $id_parent = $data[1];
+            $id = (int)$data[0];
+            $id_parent = (int)$data[1];
             $start_point = new \DateTime();
             $start_point= $start_point->setTimestamp($data[3] / 1000);
             if($data[2])
@@ -169,8 +182,6 @@ class Events
                     return false;
                 }
             }
-
-
 
         }
         catch (\Exception $exception)

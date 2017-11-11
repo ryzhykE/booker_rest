@@ -1,8 +1,17 @@
 <?php
 
+/**
+ * rest server
+ * Class RestServer
+ */
 class RestServer
 {
     protected $reqMethod;
+
+    /**
+     * start rest server
+     * @return bool
+     */
     public  function run ()
     {
         list($s, $user, $REST, $server, $api, $class, $data) = explode("/", $_SERVER['REQUEST_URI'], 7);
@@ -37,6 +46,13 @@ class RestServer
 
     }
 
+    /**
+     * set method for class
+     * @param $class
+     * @param $method
+     * @param bool $param
+     * @param bool $type
+     */
     private function setMethod($class, $method,$param = false, $type = false)
     {
         if ( method_exists($class, $method) )
@@ -45,10 +61,15 @@ class RestServer
         }
         else
         {
-            echo Response::ClientError(405, "The request cannot be fullfilled. The method is not allowed in this context.");
+            echo Response::ClientError(405, ERROR_SERVER);
         }
     }
 
+    /**
+     * clean params
+     * @param $data
+     * @return array|string
+     */
     private function cleanInputs($data) {
         $clean_input = Array();
         if (is_array($data)) {

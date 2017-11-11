@@ -2,9 +2,17 @@
 
 namespace Models;
 
+/**
+ * Class Models
+ * main class for db
+ * @package Models
+ */
 class Models
 {
-
+    /**
+     * get all info in db
+     * @return mixed
+     */
     public static function findAll()
     {
         $db = DB::getInstance();
@@ -15,6 +23,11 @@ class Models
         return $data;
     }
 
+    /**
+     * find one item by id
+     * @param $id
+     * @return mixed
+     */
     public static function findByid($id)
     {
         $db = DB::getInstance();
@@ -25,23 +38,17 @@ class Models
         return $data[0];
 		//?? false;
     }
-	
-	public function save ()
-    {
-        if (empty($this->id)) {
-            $this->insert();
-        } else {
-            $this->update();
-        }
-    }
+
     /**
-     * insert into db
+     * insert data in DB, return last insert id
+     * @return mixed
      */
     public function insert()
     {
-            $columns = [];
-            $binds = [];
-            $data = [];
+
+        $columns = [];
+        $binds = [];
+        $data = [];
             foreach ($this as $column => $value) {
                 if ('id' == $column) {
                     continue;
@@ -58,29 +65,36 @@ class Models
                 ';
             $db = DB::getInstance();
             $db->execute($sql, $data);
-            $this->id = $db->lastInsertId();
+            $res = $this->id = $db->lastInsertId();
+            return $res;
     }
+
+
     /**
-     * update obj
+     * update date in DB
+     * @return bool
      */
     public function update()
     {
-            $columns = [];
-            $data = [];
-            foreach ($this as $item => $value) {
-                if ('id' == $item) {
-                    continue;
-                }
-                $columns[] = $item . ' = ' . ':' . $item;
-                $data[':' . $item] = $value;
+        $columns = [];
+        $data = [];
+        foreach ($this as $item => $value) {
+            if ('id' == $item) {
+                continue;
             }
-            $sql = '
-                UPDATE ' . static::$table . '
-                SET ' . implode(',', $columns) .
-                ' WHERE id = :id';
-                $data[':id'] = $this->id;
-            $db = DB::getInstance();
-            $db->execute($sql, $data);
+            $columns[] = $item . ' = ' . ':' . $item;
+            $data[':' . $item] = $value;
+        }
+        $sql = '
+               UPDATE ' . static::$table . '
+               SET ' . implode(',', $columns) .
+            ' WHERE id = :id';
+        $data[':id'] = $this->id;
+        $db = DB::getInstance();
+        $result = $db->execute($sql, $data);
+        return true;
     }
+
+
 
 }

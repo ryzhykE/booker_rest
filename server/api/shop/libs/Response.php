@@ -80,6 +80,12 @@ class Response
         );
     }
 
+    /**
+     * check type expansion
+     * @param $data
+     * @param $type
+     * @return mixed|string|void
+     */
     public static function typeData ($data, $type)
     {
         switch ($type)
@@ -145,14 +151,5 @@ class Response
         print_r($data);
     }
 
-    private function convertHTML($data)
-    {
-        header('Content-Type: text/html; charset=utf-8');
-        ob_start();
-        include "/../View/template.php";
-        $html = ob_get_contents();
-        ob_end_clean();
-        print_r($html) ;
-    }
 
 }

@@ -1,6 +1,8 @@
 <?php
 
-
+/**
+ * Class TSingeton
+ */
 trait TSingeton
 {
     protected static $instance = null;

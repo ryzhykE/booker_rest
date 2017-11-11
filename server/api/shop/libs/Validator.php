@@ -54,17 +54,7 @@ class Validator
 
 
 
-    /*
-     * Class: Validator
-     *
-     */
 
-
-
-
-    public function __construct()
-    {
-    }
 
     /*
     * Clear data from user
@@ -82,28 +72,6 @@ class Validator
         {
             $data = trim(strip_tags($data));
             return $data;
-        }
-    }
-
-    /*
-    * Clear data from user
-    *
-    * @param arr: array of data
-    * @return: data or false
-    */
-    public function clearDataArr(array $arr)
-    {
-        if (!empty($arr) && is_array($arr))
-        {
-            foreach ($arr as $key => $value)
-            {
-                $data[$key] = $this->clearData($value);
-            }
-            return $data;
-        }
-        else
-        {
-            return false;
         }
     }
 
@@ -127,25 +95,6 @@ class Validator
         }
     }
 
-    /*
-    * Validate password field
-    *
-    * @param val: check string
-    * @return: boolean
-    */
-    public function checkPass($val)
-    {
-        $this->value = '';
-        $val = $this->clearData($val);
-        if (!preg_match("/^[a-zA-Z0-9_-]{6,18}$/", $val))
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
-    }
 
     /*
     * To positive number

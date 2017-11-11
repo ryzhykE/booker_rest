@@ -21,15 +21,14 @@ class Admin extends \Validator
     {
         try {
             $putParams = json_decode(file_get_contents("php://input"), true);
-            $id = $this->valid->clearData($putParams['id']);
-            $login = $this->valid->clearData($putParams['login']);
-            $email = $this->valid->clearData($putParams['email']);
-            $pass = $this->valid->clearData($putParams['pass']);
-            $result = \Models\User::updateUser($id,$login,$email,$pass);
-            if($result)
-            {
-            return \Response::ServerSuccess(201,'OK');
-            }
+            $res = new \Models\User();
+            $res->id = $this->valid->clearData($putParams['id']);
+            $res->login = $this->valid->clearData($putParams['login']);
+            $res->pass = md5(md5(trim($this->valid->clearData($putParams['pass']))));
+            $res->email = $this->valid->clearData($putParams['email']);
+            $res->hash = 'null';
+            $result = $res->update();
+            return \Response::ServerSuccess(200, "Ok");
         }
         catch(\Exception $exception)
         {

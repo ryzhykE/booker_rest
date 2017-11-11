@@ -51,7 +51,7 @@ class DB
         $sth = $this->dbh->prepare($sql);
         $result = $sth->execute($data);
        if (false === $result) {
-            throw new \Exception(NO_QUERY.$sql);
+            throw new \Exception(NO_QUERY);
         }
     }
 

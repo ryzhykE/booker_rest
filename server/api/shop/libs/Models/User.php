@@ -2,26 +2,26 @@
 
 namespace Models;
 
-
+/**
+ * User Model
+ * Works with controller Users.
+ * Receives data from the controller,
+ * @package Models
+ */
 class User extends Models
 {
     public static $table = 'users';
     public $id;
     public $login;
     public $pass;
+    public $email;
     public $hash;
-    public $id_role;
 
-    public static function authUser($login,$pass,$email)
-    {
-        $pass = md5(md5(trim($pass)));
-        $sql = "INSERT INTO  " . static::$table ." ( login, pass, email)
-                VALUES ('$login', '$pass', '$email' )";
-        $db = DB::getInstance();
-        $result = $db->execute($sql);
-        return $result;
-    }
-
+    /**
+     * return access to the main page
+     * @param $login
+     * @return mixed
+     */
     public static function loginUser($login)
     {
         $db = DB::getInstance();
@@ -32,16 +32,11 @@ class User extends Models
         return $data[0];
     }
 
-    public function checkUsers($id)
-    {
-        $db = DB::getInstance();
-        $data = $db->query(
-            'SELECT * FROM users  WHERE id=:id',
-            [':id' => $id]
-        );
-        return $data[0];
-    }
-
+    /**
+     * take hash for user
+     * @param $id
+     * @return string
+     */
     public static function setHash($id)
     {
         $hash = md5(self::generateCode(10));
@@ -58,24 +53,11 @@ class User extends Models
         return json_encode($arr);
     }
 
-    public static function updateUser($id,$login,$email,$pass)
-    {
-            $pass = md5(md5(trim($pass)));
-            $sql = "UPDATE  users  SET login='$login', email='$email',
-                pass = '$pass'  WHERE id='$id' ";
-            $db = DB::getInstance();
-            $result = $db->execute($sql);
-        if($result)
-        {
-            return $result;
-        }
-        else
-        {
-            return false;
-        }
-
-    }
-
+    /**
+     * get role user
+     * @param $id
+     * @return bool
+     */
     public static function getRoleUser($id)
     {
         $db = DB::getInstance();
@@ -90,7 +72,11 @@ class User extends Models
         return false;
     }
 
-
+    /**
+     * delete user from admin
+     * @param $id
+     * @return bool|string
+     */
     public function deleteUser($id)
     {
         if (self::getRoleUser($id) == 'user')
@@ -130,13 +116,16 @@ class User extends Models
                 return ERROR_ADDMDEL;
             }
 
-
         }
         return ERROR_DELL;
 
     }
 
-
+    /**
+     * generate code for  hash
+     * @param int $length
+     * @return string
+     */
     function generateCode($length = 6)
     {
         $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHI JKLMNOPRQSTUVWXYZ0123456789";
